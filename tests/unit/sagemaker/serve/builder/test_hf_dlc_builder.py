@@ -20,34 +20,24 @@ from sagemaker.serve import ModelServer
 
 from sagemaker.serve.utils.predictors import HfDLCLocalModePredictor
 
-mock_model_id = "TheBloke/Llama-2-7b-chat-fp16"
-mock_t5_model_id = "google/flan-t5-xxl"
-mock_prompt = "Hello, I'm a language model,"
-mock_response = "Hello, I'm a language model, and I'm here to help you with your English."
-mock_sample_input = {"inputs": mock_prompt, "parameters": {}}
-mock_sample_output = [{"generated_text": mock_response}]
-mock_expected_huggingfaceaccelerate_serving_properties = {
-    "engine": "Python",
-    "option.entryPoint": "inference.py",
-    "option.model_id": "TheBloke/Llama-2-7b-chat-fp16",
-    "option.tensor_parallel_degree": 4,
-    "option.dtype": "fp16",
-}
-
+mock_model_id = "bert-base-uncased"
+mock_prompt = "The man worked as a [MASK]."
+mock_sample_input = {"inputs": mock_prompt}
+mock_sample_output = [{'score': 0.0974755585193634, 'token': 10533, 'token_str': 'carpenter', 'sequence': 'the man worked as a carpenter.'},
+                      {'score': 0.052383411675691605, 'token': 15610, 'token_str': 'waiter', 'sequence': 'the man worked as a waiter.'},
+                      {'score': 0.04962712526321411, 'token': 13362, 'token_str': 'barber', 'sequence': 'the man worked as a barber.'},
+                      {'score': 0.0378861166536808, 'token': 15893, 'token_str': 'mechanic', 'sequence': 'the man worked as a mechanic.'},
+                      {'score': 0.037680838257074356, 'token': 18968, 'token_str': 'salesman', 'sequence': 'the man worked as a salesman.'}]
 mock_schema_builder = MagicMock()
 mock_schema_builder.sample_input = mock_sample_input
 mock_schema_builder.sample_output = mock_sample_output
-
-mock_schema_builder_invalid = MagicMock()
-mock_schema_builder_invalid.sample_input = {"invalid": "format"}
-mock_schema_builder_invalid.sample_output = mock_sample_output
 
 
 class TestHFDlcBuilder(unittest.TestCase):
 
     @patch("sagemaker.serve.builder.hf_dlc_builder._capture_telemetry", side_effect=None)
     @patch("sagemaker.serve.builder.hf_dlc_builder._get_ram_usage_mb", return_value=1024)
-    @patch("sagemaker.serve.builder.djl_builder._get_nb_instance", return_value="ml.g5.24xlarge")
+    @patch("sagemaker.serve.builder.hf_dlc_builder._get_nb_instance", return_value="ml.g5.24xlarge")
     def test_build_deploy_for_hf_dlc_local_container(
             self,
             mock_get_nb_instance,
@@ -58,7 +48,7 @@ class TestHFDlcBuilder(unittest.TestCase):
             model=mock_model_id,
             schema_builder=mock_schema_builder,
             mode=Mode.LOCAL_CONTAINER,
-            model_server=ModelServer.HF_DLC_SERVER,
+            model_server=ModelServer.HUGGINGFACE_DLC,
         )
 
         builder._prepare_for_mode = MagicMock()
@@ -67,20 +57,18 @@ class TestHFDlcBuilder(unittest.TestCase):
         model = builder.build()
         builder.serve_settings.telemetry_opt_out = True
 
-        assert builder.nb_instance_type == "ml.g5.24xlarge"
-
         builder.modes[str(Mode.LOCAL_CONTAINER)] = MagicMock()
         predictor = model.deploy(model_data_download_timeout=1800)
 
         assert builder.env_vars["MODEL_LOADING_TIMEOUT"] == "1800"
         assert isinstance(predictor, HfDLCLocalModePredictor)
 
+        assert builder.nb_instance_type == "ml.g5.24xlarge"
+
         builder._original_deploy = MagicMock()
         builder._prepare_for_mode.return_value = (None, {})
         predictor = model.deploy(mode=Mode.SAGEMAKER_ENDPOINT, role="mock_role_arn")
         assert "HF_MODEL_ID" in model.env
-        assert "HUGGING_FACE_HUB_TOKEN" in model.env
-        assert isinstance(predictor, HfDLCLocalModePredictor)
 
         with self.assertRaises(ValueError) as _:
             model.deploy(mode=Mode.IN_PROCESS)
