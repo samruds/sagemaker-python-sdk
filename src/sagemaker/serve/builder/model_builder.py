@@ -88,11 +88,15 @@ from sagemaker.huggingface.llm_utils import get_huggingface_model_metadata
 
 logger = logging.getLogger(__name__)
 
+# Any new server type should be added here
 supported_model_server = {
     ModelServer.TORCHSERVE,
     ModelServer.TRITON,
     ModelServer.DJL_SERVING,
     ModelServer.TENSORFLOW_SERVING,
+    ModelServer.MMS,
+    ModelServer.TGI,
+    ModelServer.TEI,
 }
 
 
@@ -280,31 +284,6 @@ class ModelBuilder(Triton, DJL, JumpStart, TGI, Transformers, TensorflowServing,
             "the Hub, Adding unsupported task types will throw an exception"
         },
     )
-
-    def _build_validations(self):
-        """Placeholder docstring"""
-        # TODO: Beta validations - remove after the launch
-        if self.mode == Mode.IN_PROCESS:
-            raise ValueError("IN_PROCESS mode is not supported yet!")
-
-        if self.inference_spec and self.model:
-            raise ValueError("Cannot have both the Model and Inference spec in the builder")
-
-        if self.image_uri and not is_1p_image_uri(self.image_uri) and self.model_server is None:
-            raise ValueError(
-                "Model_server must be set when non-first-party image_uri is set. "
-                + "Supported model servers: %s" % supported_model_server
-            )
-
-        # Set TorchServe as default model server
-        if not self.model_server:
-            self.model_server = ModelServer.TORCHSERVE
-
-        if self.model_server not in supported_model_server:
-            raise ValueError(
-                "%s is not supported yet! Supported model servers: %s"
-                % (self.model_server, supported_model_server)
-            )
 
     def _save_model_inference_spec(self):
         """Placeholder docstring"""
@@ -748,6 +727,9 @@ class ModelBuilder(Triton, DJL, JumpStart, TGI, Transformers, TensorflowServing,
             self._initialize_for_mlflow()
             _validate_input_for_mlflow(self.model_server, self.env_vars.get("MLFLOW_MODEL_FLAVOR"))
 
+        self._build_validations()
+        self._honor_model_server()
+
         if isinstance(self.model, str):
             model_task = None
             if self.model_metadata:
@@ -779,7 +761,33 @@ class ModelBuilder(Triton, DJL, JumpStart, TGI, Transformers, TensorflowServing,
                 else:
                     return self._build_for_transformers()
 
-        self._build_validations()
+        # Set TorchServe as default model server as last resort
+        if not self.model_server:
+            self.model_server = ModelServer.TORCHSERVE
+
+        raise ValueError("%s model server is not supported" % self.model_server)
+
+    def _build_validations(self):
+        """Additional validations before fallback to ModelServer.TORCHSERVE"""
+        if self.mode == Mode.IN_PROCESS:
+            raise ValueError("IN_PROCESS mode is not supported yet!")
+
+        if self.inference_spec and self.model:
+            raise ValueError("Cannot have both the Model and Inference spec in the builder")
+
+        if self.image_uri and not is_1p_image_uri(self.image_uri) and self.model_server is None:
+            raise ValueError(
+                "Model_server must be set when non-first-party image_uri is set. "
+                + "Supported model servers: %s" % supported_model_server
+            )
+
+    def _honor_model_server(self):
+        if self.model_server is not None and \
+                self.model_server not in supported_model_server:
+            raise ValueError(
+                "%s is not supported yet! Supported model servers: %s"
+        % (self.model_server, supported_model_server)
+        )
 
         if self.model_server == ModelServer.TORCHSERVE:
             return self._build_for_torchserve()
@@ -790,9 +798,20 @@ class ModelBuilder(Triton, DJL, JumpStart, TGI, Transformers, TensorflowServing,
         if self.model_server == ModelServer.TENSORFLOW_SERVING:
             return self._build_for_tensorflow_serving()
 
-        raise ValueError("%s model server is not supported" % self.model_server)
+        if self.model_server == ModelServer.DJL_SERVING:
+            return self._build_for_djl()
 
-    def save(
+        if self.model_server == ModelServer.TGI:
+            return self._build_for_tei()
+
+        if self.model_server == ModelServer.TGI:
+            return self._build_for_tgi()
+
+        if self.model_server == ModelServer.MMS:
+            return self._build_for_transformers()
+
+
+def save(
         self,
         save_path: Optional[str] = None,
         s3_path: Optional[str] = None,
