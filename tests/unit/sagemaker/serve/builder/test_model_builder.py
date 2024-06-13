@@ -141,7 +141,8 @@ class TestModelBuilder(unittest.TestCase):
 
     @patch("sagemaker.serve.builder.model_builder._ServeSettings")
     @patch("sagemaker.serve.builder.model_builder.ModelBuilder._build_for_djl")
-    def test_model_server_override_dj_without_model(self, mock_build_for_djl, mock_serve_settings):
+    def test_model_server_override_dj_without_model_or_inference_spec(self, mock_build_for_djl,
+                                                      mock_serve_settings):
         builder = ModelBuilder(model_server=ModelServer.DJL_SERVING, model=None, inference_spec=None)
         builder.build(sagemaker_session=mock_session)
 
