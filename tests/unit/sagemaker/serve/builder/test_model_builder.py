@@ -134,7 +134,7 @@ class TestModelBuilder(unittest.TestCase):
         mock_setting_object.role_arn = mock_role_arn
         mock_setting_object.s3_model_data_url = mock_s3_model_data_url
 
-        builder = ModelBuilder(model_server=ModelServer.TORCHSERVE)
+        builder = ModelBuilder(model_server=ModelServer.DJL, model="gpt_llm_burt")
         builder.build(sagemaker_session=mock_session)
 
         mock_build_for_djl.assert_called_once()
