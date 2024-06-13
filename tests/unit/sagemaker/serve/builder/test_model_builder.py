@@ -141,7 +141,9 @@ class TestModelBuilder(unittest.TestCase):
 
     @patch("sagemaker.serve.builder.model_builder._ServeSettings")
     def test_model_server_override_djl_without_model_or_mlflow(self, mock_serve_settings):
-        builder = ModelBuilder(model_server=ModelServer.DJL_SERVING, model=None, inference_spec=None)
+        builder = ModelBuilder(
+            model_server=ModelServer.DJL_SERVING, model=None, inference_spec=None
+        )
         self.assertRaisesRegex(
             Exception,
             "Missing required parameter `model` or 'ml_flow' path",
@@ -153,8 +155,9 @@ class TestModelBuilder(unittest.TestCase):
 
     @patch("sagemaker.serve.builder.model_builder._ServeSettings")
     @patch("sagemaker.serve.builder.model_builder.ModelBuilder._build_for_torchserve")
-    def test_model_server_override_torchserve_with_model(self, mock_build_for_ts,
-                                                      mock_serve_settings):
+    def test_model_server_override_torchserve_with_model(
+        self, mock_build_for_ts, mock_serve_settings
+    ):
         mock_setting_object = mock_serve_settings.return_value
         mock_setting_object.role_arn = mock_role_arn
         mock_setting_object.s3_model_data_url = mock_s3_model_data_url
@@ -178,8 +181,7 @@ class TestModelBuilder(unittest.TestCase):
 
     @patch("sagemaker.serve.builder.model_builder._ServeSettings")
     @patch("sagemaker.serve.builder.model_builder.ModelBuilder._build_for_triton")
-    def test_model_server_override_triton_with_model(self, mock_build_for_ts,
-                                                         mock_serve_settings):
+    def test_model_server_override_triton_with_model(self, mock_build_for_ts, mock_serve_settings):
         mock_setting_object = mock_serve_settings.return_value
         mock_setting_object.role_arn = mock_role_arn
         mock_setting_object.s3_model_data_url = mock_s3_model_data_url
@@ -191,8 +193,7 @@ class TestModelBuilder(unittest.TestCase):
 
     @patch("sagemaker.serve.builder.model_builder._ServeSettings")
     @patch("sagemaker.serve.builder.model_builder.ModelBuilder._build_for_tensorflow_serving")
-    def test_model_server_override_tensor_with_model(self, mock_build_for_ts,
-                                                     mock_serve_settings):
+    def test_model_server_override_tensor_with_model(self, mock_build_for_ts, mock_serve_settings):
         mock_setting_object = mock_serve_settings.return_value
         mock_setting_object.role_arn = mock_role_arn
         mock_setting_object.s3_model_data_url = mock_s3_model_data_url
@@ -204,8 +205,7 @@ class TestModelBuilder(unittest.TestCase):
 
     @patch("sagemaker.serve.builder.model_builder._ServeSettings")
     @patch("sagemaker.serve.builder.model_builder.ModelBuilder._build_for_tei")
-    def test_model_server_override_tei_with_model(self, mock_build_for_ts,
-                                                     mock_serve_settings):
+    def test_model_server_override_tei_with_model(self, mock_build_for_ts, mock_serve_settings):
         mock_setting_object = mock_serve_settings.return_value
         mock_setting_object.role_arn = mock_role_arn
         mock_setting_object.s3_model_data_url = mock_s3_model_data_url
@@ -217,8 +217,7 @@ class TestModelBuilder(unittest.TestCase):
 
     @patch("sagemaker.serve.builder.model_builder._ServeSettings")
     @patch("sagemaker.serve.builder.model_builder.ModelBuilder._build_for_tgi")
-    def test_model_server_override_tgi_with_model(self, mock_build_for_ts,
-                                                  mock_serve_settings):
+    def test_model_server_override_tgi_with_model(self, mock_build_for_ts, mock_serve_settings):
         mock_setting_object = mock_serve_settings.return_value
         mock_setting_object.role_arn = mock_role_arn
         mock_setting_object.s3_model_data_url = mock_s3_model_data_url
@@ -230,8 +229,9 @@ class TestModelBuilder(unittest.TestCase):
 
     @patch("sagemaker.serve.builder.model_builder._ServeSettings")
     @patch("sagemaker.serve.builder.model_builder.ModelBuilder._build_for_transformers")
-    def test_model_server_override_transformers_with_model(self, mock_build_for_ts,
-                                                  mock_serve_settings):
+    def test_model_server_override_transformers_with_model(
+        self, mock_build_for_ts, mock_serve_settings
+    ):
         mock_setting_object = mock_serve_settings.return_value
         mock_setting_object.role_arn = mock_role_arn
         mock_setting_object.s3_model_data_url = mock_s3_model_data_url
