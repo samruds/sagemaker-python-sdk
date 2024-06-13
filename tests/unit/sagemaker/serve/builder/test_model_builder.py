@@ -140,8 +140,7 @@ class TestModelBuilder(unittest.TestCase):
         mock_build_for_djl.assert_called_once()
 
     @patch("sagemaker.serve.builder.model_builder._ServeSettings")
-    def test_model_server_override_djl_without_model_or_inference_spec(self, mock_build_for_djl,
-                                                      mock_serve_settings):
+    def test_model_server_override_djl_without_model_or_mlflow(self, mock_serve_settings):
         builder = ModelBuilder(model_server=ModelServer.DJL_SERVING, model=None, inference_spec=None)
         self.assertRaisesRegex(
             Exception,
