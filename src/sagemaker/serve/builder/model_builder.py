@@ -779,13 +779,13 @@ class ModelBuilder(Triton, DJL, JumpStart, TGI, Transformers, TensorflowServing,
             raise ValueError(
                 "Model_server must be set when non-first-party image_uri is set. "
                 + "Supported model servers: %s" % supported_model_server
-        )
+            )
 
         if self.model_server not in supported_model_server:
             raise ValueError(
                 "%s is not supported yet! Supported model servers: %s"
-        % (self.model_server, supported_model_server)
-        )
+                % (self.model_server, supported_model_server)
+            )
 
         if self.model_server == ModelServer.TORCHSERVE:
             return self._build_for_torchserve()
@@ -809,12 +809,12 @@ class ModelBuilder(Triton, DJL, JumpStart, TGI, Transformers, TensorflowServing,
             return self._build_for_transformers()
 
     def save(
-            self,
-            save_path: Optional[str] = None,
-            s3_path: Optional[str] = None,
-            sagemaker_session: Optional[Session] = None,
-            role_arn: Optional[str] = None,
-        ) -> Type[Model]:
+        self,
+        save_path: Optional[str] = None,
+        s3_path: Optional[str] = None,
+        sagemaker_session: Optional[Session] = None,
+        role_arn: Optional[str] = None,
+    ) -> Type[Model]:
         """WARNING: This function is expremental and not intended for production use.
 
         This function is available for models served by DJL serving.
