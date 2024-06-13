@@ -807,7 +807,7 @@ class ModelBuilder(Triton, DJL, JumpStart, TGI, Transformers, TensorflowServing,
         if self.model_server == ModelServer.DJL_SERVING:
             return self._build_for_djl()
 
-        if self.model_server == ModelServer.TGI:
+        if self.model_server == ModelServer.TEI:
             return self._build_for_tei()
 
         if self.model_server == ModelServer.TGI:
