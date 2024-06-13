@@ -728,7 +728,7 @@ class ModelBuilder(Triton, DJL, JumpStart, TGI, Transformers, TensorflowServing,
             _validate_input_for_mlflow(self.model_server, self.env_vars.get("MLFLOW_MODEL_FLAVOR"))
 
         if self.model_server is not None:
-            return self._build_for_model_server(self.model_server)
+            return self._build_for_model_server()
 
         if isinstance(self.model, str):
             model_task = None
@@ -767,9 +767,8 @@ class ModelBuilder(Triton, DJL, JumpStart, TGI, Transformers, TensorflowServing,
 
         raise ValueError("%s model server is not supported" % self.model_server)
 
-
-    def _build_for_model_server(self):
-        """Additional validations before fallback to ModelServer.TORCHSERVE"""
+    def _build_for_model_server(self):  # pylint: disable=R0911, R1710
+        """Additional validations before fallback to auto-detection or ModelServer.TORCHSERVE"""
         if self.mode == Mode.IN_PROCESS:
             raise ValueError("IN_PROCESS mode is not supported yet!")
 
@@ -809,14 +808,13 @@ class ModelBuilder(Triton, DJL, JumpStart, TGI, Transformers, TensorflowServing,
         if self.model_server == ModelServer.MMS:
             return self._build_for_transformers()
 
-
-def save(
-        self,
-        save_path: Optional[str] = None,
-        s3_path: Optional[str] = None,
-        sagemaker_session: Optional[Session] = None,
-        role_arn: Optional[str] = None,
-    ) -> Type[Model]:
+    def save(
+            self,
+            save_path: Optional[str] = None,
+            s3_path: Optional[str] = None,
+            sagemaker_session: Optional[Session] = None,
+            role_arn: Optional[str] = None,
+        ) -> Type[Model]:
         """WARNING: This function is expremental and not intended for production use.
 
         This function is available for models served by DJL serving.
