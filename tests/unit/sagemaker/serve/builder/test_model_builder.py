@@ -129,7 +129,7 @@ class TestModelBuilder(unittest.TestCase):
 
     @patch("sagemaker.serve.builder.model_builder._ServeSettings")
     @patch("sagemaker.serve.builder.model_builder.ModelBuilder._build_for_djl")
-    def test_model_server_override_djl(self, mock_build_for_djl, mock_serve_settings):
+    def test_model_server_override_dj_with_model(self, mock_build_for_djl, mock_serve_settings):
         mock_setting_object = mock_serve_settings.return_value
         mock_setting_object.role_arn = mock_role_arn
         mock_setting_object.s3_model_data_url = mock_s3_model_data_url
@@ -138,6 +138,23 @@ class TestModelBuilder(unittest.TestCase):
         builder.build(sagemaker_session=mock_session)
 
         mock_build_for_djl.assert_called_once()
+
+    @patch("sagemaker.serve.builder.model_builder._ServeSettings")
+    @patch("sagemaker.serve.builder.model_builder.ModelBuilder._build_for_djl")
+    def test_model_server_override_dj_without_model(self, mock_build_for_djl, mock_serve_settings):
+        mock_setting_object = mock_serve_settings.return_value
+        mock_setting_object.role_arn = mock_role_arn
+        mock_setting_object.s3_model_data_url = mock_s3_model_data_url
+
+        builder = ModelBuilder(model_server=ModelServer.DJL_SERVING)
+        self.assertRaisesRegex(
+            Exception,
+            "Cannot detect required model or inference spec",
+            builder.build,
+            Mode.SAGEMAKER_ENDPOINT,
+            mock_role_arn,
+            mock_session,
+        )
 
     @patch("os.makedirs", Mock())
     @patch("sagemaker.serve.builder.model_builder._detect_framework_and_version")
