@@ -144,9 +144,14 @@ class TestModelBuilder(unittest.TestCase):
     def test_model_server_override_dj_without_model_or_inference_spec(self, mock_build_for_djl,
                                                       mock_serve_settings):
         builder = ModelBuilder(model_server=ModelServer.DJL_SERVING, model=None, inference_spec=None)
-        builder.build(sagemaker_session=mock_session)
-
-        mock_build_for_djl.assert_called_once()
+        self.assertRaisesRegex(
+            Exception,
+            "Missing required parameter `model` or 'ml_flow' path",
+            builder.build,
+            Mode.SAGEMAKER_ENDPOINT,
+            mock_role_arn,
+            mock_session,
+        )
 
     @patch("os.makedirs", Mock())
     @patch("sagemaker.serve.builder.model_builder._detect_framework_and_version")
