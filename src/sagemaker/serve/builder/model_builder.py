@@ -792,8 +792,8 @@ class ModelBuilder(Triton, DJL, JumpStart, TGI, Transformers, TensorflowServing,
                 % (self.model_server, supported_model_server)
             )
 
-        if not self.model:
-            raise ValueError("Missing required parameter `model`")
+        if not self.model or not self.model_metadata:
+            raise ValueError("Missing required parameter `model` or 'ml_flow' path")
 
         if self.model_server == ModelServer.TORCHSERVE:
             return self._build_for_torchserve()
