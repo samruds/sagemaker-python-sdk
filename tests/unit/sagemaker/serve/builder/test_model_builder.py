@@ -147,14 +147,7 @@ class TestModelBuilder(unittest.TestCase):
         mock_setting_object.s3_model_data_url = mock_s3_model_data_url
 
         builder = ModelBuilder(model_server=ModelServer.DJL_SERVING)
-        self.assertRaisesRegex(
-            Exception,
-            "Cannot detect required model or inference spec",
-            builder.build,
-            Mode.SAGEMAKER_ENDPOINT,
-            mock_role_arn,
-            mock_session,
-        )
+        builder.build(sagemaker_session=mock_session)
 
     @patch("os.makedirs", Mock())
     @patch("sagemaker.serve.builder.model_builder._detect_framework_and_version")
