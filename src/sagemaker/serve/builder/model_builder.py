@@ -727,7 +727,7 @@ class ModelBuilder(Triton, DJL, JumpStart, TGI, Transformers, TensorflowServing,
             self._initialize_for_mlflow()
             _validate_input_for_mlflow(self.model_server, self.env_vars.get("MLFLOW_MODEL_FLAVOR"))
 
-        if not self.model_server:
+        if self.model_server:
             return self._build_for_model_server()
 
         if isinstance(self.model, str):
