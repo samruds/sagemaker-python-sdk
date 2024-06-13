@@ -10,6 +10,12 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+
+'''
+Executed as tox -e py310 -- tests/unit/sagemaker/serve/builder/test_transformers_builder.py
+'''
+
+
 from __future__ import absolute_import
 from unittest.mock import MagicMock, patch
 
@@ -19,6 +25,13 @@ from sagemaker.serve.mode.function_pointers import Mode
 from tests.unit.sagemaker.serve.constants import MOCK_VPC_CONFIG
 
 from sagemaker.serve.utils.predictors import TransformersLocalModePredictor
+
+^^ 19-27 are imports - we can import a complete module or import a class from a module
+
+
+### Objects/variables below are Mocks
+## http://www.ines-panker.com/2020/06/01/python-mock.html
+## https://realpython.com/python-mock-library/
 
 mock_model_id = "bert-base-uncased"
 mock_prompt = "The man worked as a [MASK]."
@@ -64,12 +77,16 @@ MOCK_IMAGE_CONFIG = (
 )
 
 
-class TestTransformersBuilder(unittest.TestCase):
+## Test class starts from below, notice the Test usage in class name, and test cases
+class TestTransformersBuilder(unittest.TestCase): <- needed for any test
+
     @patch(
         "sagemaker.serve.builder.transformers_builder._get_nb_instance",
         return_value="ml.g5.24xlarge",
     )
     @patch("sagemaker.serve.builder.transformers_builder._capture_telemetry", side_effect=None)
+    ^^^^ we patch objects, functions using patch, two usages are patch, patch_object
+
     def test_build_deploy_for_transformers_local_container_and_remote_container(
         self,
         mock_get_nb_instance,
@@ -82,18 +99,30 @@ class TestTransformersBuilder(unittest.TestCase):
             vpc_config=MOCK_VPC_CONFIG,
         )
 
+        ^ initialize ModelBuilder
+
         builder._prepare_for_mode = MagicMock()
         builder._prepare_for_mode.side_effect = None
+
+        ^ mock a method on ModelBuilder
 
         model = builder.build()
         builder.serve_settings.telemetry_opt_out = True
 
+        ^ get a Model using builder.build()
+
         builder.modes[str(Mode.LOCAL_CONTAINER)] = MagicMock()
         predictor = model.deploy(model_data_download_timeout=1800)
+
+        ^ create a predictor from deploy
+
 
         assert model.vpc_config == MOCK_VPC_CONFIG
         assert builder.env_vars["MODEL_LOADING_TIMEOUT"] == "1800"
         assert isinstance(predictor, TransformersLocalModePredictor)
+
+        ^ asserting properties on the model
+        ^ asserts check if our assumptions are right
 
         assert builder.nb_instance_type == "ml.g5.24xlarge"
 
@@ -101,9 +130,12 @@ class TestTransformersBuilder(unittest.TestCase):
         builder._prepare_for_mode.return_value = (None, {})
         predictor = model.deploy(mode=Mode.SAGEMAKER_ENDPOINT, role="mock_role_arn")
         assert "HF_MODEL_ID" in model.env
+        ^^ making asserts against different modes of deployment
 
         with self.assertRaises(ValueError) as _:
             model.deploy(mode=Mode.IN_PROCESS)
+
+         ^^ we test exceptions like this
 
     @patch(
         "sagemaker.serve.builder.transformers_builder._get_nb_instance",
