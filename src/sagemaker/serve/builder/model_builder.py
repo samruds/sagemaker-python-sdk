@@ -727,6 +727,8 @@ class ModelBuilder(Triton, DJL, JumpStart, TGI, Transformers, TensorflowServing,
             self._initialize_for_mlflow()
             _validate_input_for_mlflow(self.model_server, self.env_vars.get("MLFLOW_MODEL_FLAVOR"))
 
+        self._build_validations()
+
         if self.model_server:
             return self._build_for_model_server()
 
@@ -768,8 +770,8 @@ class ModelBuilder(Triton, DJL, JumpStart, TGI, Transformers, TensorflowServing,
 
         raise ValueError("%s model server is not supported" % self.model_server)
 
-    def _build_for_model_server(self):  # pylint: disable=R0911, R1710
-        """Additional validations before fallback to auto-detection or ModelServer.TORCHSERVE"""
+    def _build_validations(self):
+        """Validations needed for model server overrides, or auto-detectection or fallback"""
         if self.mode == Mode.IN_PROCESS:
             raise ValueError("IN_PROCESS mode is not supported yet!")
 
@@ -782,6 +784,8 @@ class ModelBuilder(Triton, DJL, JumpStart, TGI, Transformers, TensorflowServing,
                 + "Supported model servers: %s" % supported_model_server
             )
 
+    def _build_for_model_server(self):  # pylint: disable=R0911, R1710
+        """Model server overrides"""
         if self.model_server not in supported_model_server:
             raise ValueError(
                 "%s is not supported yet! Supported model servers: %s"
