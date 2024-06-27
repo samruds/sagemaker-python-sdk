@@ -249,7 +249,7 @@ class Transformers(ABC):
         if not hasattr(self, "pysdk_model"):
 
             if self.inference_spec is not None:
-                self.env_vars.update({"HF_MODEL_ID": self.inference_spec.get_model})
+                self.env_vars.update({"HF_MODEL_ID": self.inference_spec.get_model()})
             else:
                 self.env_vars.update({"HF_MODEL_ID": self.model})
 
