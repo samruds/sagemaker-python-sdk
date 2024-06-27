@@ -23,11 +23,6 @@ logger = logging.getLogger(__name__)
 
 def _get_model_config_properties_from_hf(model_id: str, hf_hub_token: str = None):
     """Placeholder docstring"""
-
-    logger.debug("_get_model_config_properties_from_hf")
-    logger.info(model_id)
-    logger.info(hf_hub_token)
-
     config_url = f"https://huggingface.co/{model_id}/raw/main/config.json"
     model_config = None
     try:
