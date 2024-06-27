@@ -110,7 +110,7 @@ class Transformers(ABC):
         """
 
         hf_model_md = get_huggingface_model_metadata(
-            self.model, self.env_vars.get("HUGGING_FACE_HUB_TOKEN")
+            self.env_vars.get("HF_MODEL_ID"), self.env_vars.get("HUGGING_FACE_HUB_TOKEN")
         )
         hf_config = image_uris.config_for_framework("huggingface").get("inference")
         config = hf_config["versions"]
