@@ -258,11 +258,11 @@ class Transformers(ABC):
             # TODO: Move to a helper function
             if hasattr(self.env_vars, "HF_API_TOKEN"):
                 self.hf_model_config = _get_model_config_properties_from_hf(
-                    self.model, self.env_vars.get("HF_API_TOKEN")
+                    self.env_vars.get("HF_MODEL_ID"), self.env_vars.get("HF_API_TOKEN")
                 )
             else:
                 self.hf_model_config = _get_model_config_properties_from_hf(
-                    self.model, self.env_vars.get("HUGGING_FACE_HUB_TOKEN")
+                    self.env_vars.get("HF_MODEL_ID"), self.env_vars.get("HUGGING_FACE_HUB_TOKEN")
                 )
 
         self.pysdk_model = self._create_transformers_model()
