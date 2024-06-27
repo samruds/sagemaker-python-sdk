@@ -72,6 +72,7 @@ class Transformers(ABC):
         self.pytorch_version = None
         self.instance_type = None
         self.schema_builder = None
+        self.inference_spec = None
 
     @abstractmethod
     def _prepare_for_mode(self):
@@ -246,7 +247,11 @@ class Transformers(ABC):
 
         _create_dir_structure(self.model_path)
         if not hasattr(self, "pysdk_model"):
-            self.env_vars.update({"HF_MODEL_ID": self.model})
+
+            if self.inference_spec is not None:
+                self.env_vars.update({"HF_MODEL_ID": self.inference_spec.get_model})
+            else:
+                self.env_vars.update({"HF_MODEL_ID": self.model})
 
             logger.info(self.env_vars)
 
