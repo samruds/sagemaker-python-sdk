@@ -111,6 +111,8 @@ def prepare_for_mms(
 
     shutil.copy2(Path(__file__).parent.joinpath("inference.py"), code_dir)
 
+    logger.info("Finished writing inference.py to code directory")
+
     shared_libs_dir = model_path.joinpath("shared_libs")
     shared_libs_dir.mkdir(exist_ok=True)
     for shared_lib in shared_libs:

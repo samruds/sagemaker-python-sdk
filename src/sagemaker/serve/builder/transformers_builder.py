@@ -279,6 +279,8 @@ class Transformers(ABC):
         if self.mode == Mode.LOCAL_CONTAINER:
             self._prepare_for_mode()
 
+        logger.info("Model configuration %s", self.pysdk_model)
+
         return self.pysdk_model
 
     def _set_instance(self, **kwargs):
@@ -357,6 +359,7 @@ class Transformers(ABC):
         # save the model or inference spec in cloud pickle format
         if self.inference_spec:
             save_pkl(code_path, (self.inference_spec, self.schema_builder))
+            logger.info("PKL file saved to file: {}".format(code_path))
 
         self._auto_detect_container()
 

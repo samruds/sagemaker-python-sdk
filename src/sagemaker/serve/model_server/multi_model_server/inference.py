@@ -36,6 +36,8 @@ def model_fn(model_dir):
         if isinstance(obj[0], InferenceSpec):
             inference_spec, schema_builder = obj
 
+    logger.info("in model_fn")
+
     if inference_spec:
         return partial(inference_spec.invoke, model=inference_spec.load(model_dir))
 
@@ -52,11 +54,13 @@ def input_fn(input_data, content_type):
                 io.BytesIO(input_data), content_type[0]
             )
     except Exception as e:
+        logger.error("Encountered error: %s in deserialize_response." % e)
         raise Exception("Encountered error in deserialize_request.") from e
 
 
 def predict_fn(input_data, predict_callable):
     """Placeholder docstring"""
+    logger.info("in predict_fn")
     return predict_callable(input_data)
 
 
