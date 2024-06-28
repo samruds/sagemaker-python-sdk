@@ -1,18 +1,24 @@
 """This module is for SageMaker inference.py."""
 
 from __future__ import absolute_import
+import os
 import io
 import cloudpickle
 import shutil
+import platform
 from pathlib import Path
 from functools import partial
 from sagemaker.serve.spec.inference_spec import InferenceSpec
+from sagemaker.serve.validations.check_integrity import perform_integrity_check
 import logging
 
 logger = logging.getLogger(__name__)
 
 inference_spec = None
 schema_builder = None
+SHARED_LIBS_DIR = Path(__file__).parent.parent.joinpath("shared_libs")
+SERVE_PATH = Path(__file__).parent.joinpath("serve.pkl")
+METADATA_PATH = Path(__file__).parent.joinpath("metadata.json")
 
 
 def model_fn(model_dir):
@@ -25,7 +31,7 @@ def model_fn(model_dir):
 
     serve_path = Path(__file__).parent.joinpath("serve.pkl")
     with open(str(serve_path), mode="rb") as file:
-        global inference_spec, native_model, schema_builder
+        global inference_spec, schema_builder
         obj = cloudpickle.load(file)
         if isinstance(obj[0], InferenceSpec):
             inference_spec, schema_builder = obj
@@ -64,3 +70,30 @@ def output_fn(predictions, accept_type):
     except Exception as e:
         logger.error("Encountered error: %s in serialize_response." % e)
         raise Exception("Encountered error in serialize_response.") from e
+
+
+def _run_preflight_diagnostics():
+    _py_vs_parity_check()
+    _pickle_file_integrity_check()
+
+
+def _py_vs_parity_check():
+    container_py_vs = platform.python_version()
+    local_py_vs = os.getenv("LOCAL_PYTHON")
+
+    if not local_py_vs or container_py_vs.split(".")[1] != local_py_vs.split(".")[1]:
+        logger.warning(
+            f"The local python version {local_py_vs} differs from the python version "
+            f"{container_py_vs} on the container. Please align the two to avoid unexpected behavior"
+        )
+
+
+def _pickle_file_integrity_check():
+    with open(SERVE_PATH, "rb") as f:
+        buffer = f.read()
+
+    perform_integrity_check(buffer=buffer, metadata_path=METADATA_PATH)
+
+
+# on import, execute
+_run_preflight_diagnostics()

@@ -26,6 +26,7 @@ from sagemaker.serve.utils.hf_utils import _get_model_config_properties_from_hf
 from sagemaker.huggingface import HuggingFaceModel
 from sagemaker.serve.model_server.multi_model_server.prepare import (
     _create_dir_structure,
+    prepare_for_mms
 )
 from sagemaker.serve.utils.predictors import TransformersLocalModePredictor
 from sagemaker.serve.utils.types import ModelServer
@@ -73,6 +74,7 @@ class Transformers(ABC):
         self.instance_type = None
         self.schema_builder = None
         self.inference_spec = None
+        self.shared_libs = None
 
     @abstractmethod
     def _prepare_for_mode(self):
@@ -305,6 +307,15 @@ class Transformers(ABC):
         """
         self.secret_key = None
         self.model_server = ModelServer.MMS
+
+        self.secret_key = prepare_for_mms(
+            model_path=self.model_path,
+            shared_libs=self.shared_libs,
+            dependencies=self.dependencies,
+            session=self.sagemaker_session,
+            image_uri=self.image_uri,
+            inference_spec=self.inference_spec,
+        )
 
         self._build_transformers_env()
 
