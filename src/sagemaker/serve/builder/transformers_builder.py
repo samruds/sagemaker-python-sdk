@@ -13,9 +13,12 @@
 """Transformers build logic with model builder"""
 from __future__ import absolute_import
 import logging
+import os
 from abc import ABC, abstractmethod
 from typing import Type
 from packaging.version import Version
+
+from pathlib import Path
 
 from sagemaker.model import Model
 from sagemaker import image_uris
@@ -28,6 +31,7 @@ from sagemaker.serve.model_server.multi_model_server.prepare import (
     _create_dir_structure,
     prepare_for_mms
 )
+from sagemaker.serve.detector.pickler import save_pkl
 from sagemaker.serve.utils.predictors import TransformersLocalModePredictor
 from sagemaker.serve.utils.types import ModelServer
 from sagemaker.serve.mode.function_pointers import Mode
@@ -307,6 +311,14 @@ class Transformers(ABC):
         """
         self.secret_key = None
         self.model_server = ModelServer.MMS
+
+        if not os.path.exists(self.model_path):
+            os.makedirs(self.model_path)
+
+        code_path = Path(self.model_path).joinpath("code")
+        # save the model or inference spec in cloud pickle format
+        if self.inference_spec:
+            save_pkl(code_path, (self.inference_spec, self.schema_builder))
 
         self.secret_key = prepare_for_mms(
             model_path=self.model_path,
