@@ -361,7 +361,7 @@ class Transformers(ABC):
             save_pkl(code_path, (self.inference_spec, self.schema_builder))
             logger.info("PKL file saved to file: {}".format(code_path))
 
-        self._auto_detect_container()
+        ##self._auto_detect_container()
 
         self.secret_key = prepare_for_mms(
             model_path=self.model_path,
