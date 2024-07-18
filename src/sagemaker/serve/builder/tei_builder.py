@@ -137,8 +137,16 @@ class TEI(ABC):
             else:
                 raise ValueError("Mode %s is not supported!" % overwrite_mode)
 
-        serializer = self.schema_builder.input_serializer
-        deserializer = self.schema_builder._output_deserializer
+        serializer = (
+            self.schema_builder.custom_input_translator
+            if hasattr(self.schema_builder, "custom_input_translator")
+            else self.schema_builder.input_serializer
+        )
+        deserializer = (
+            self.schema_builder.custom_output_translator
+            if hasattr(self.schema_builder, "custom_output_translator")
+            else self.schema_builder.output_deserializer
+        )
         if self.mode == Mode.LOCAL_CONTAINER:
             timeout = kwargs.get("model_data_download_timeout")
 
