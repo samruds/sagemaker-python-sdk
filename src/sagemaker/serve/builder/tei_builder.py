@@ -24,6 +24,9 @@ from sagemaker.huggingface import HuggingFaceModel
 from sagemaker.serve.utils.local_hardware import (
     _get_nb_instance,
 )
+import os
+from sagemaker import Session
+from sagemaker.serve.detector.pickler import save_pkl
 from sagemaker.serve.model_server.tgi.prepare import _create_dir_structure
 from sagemaker.serve.utils.optimize_utils import _is_optimized
 from sagemaker.serve.utils.predictors import TeiLocalModePredictor
@@ -31,6 +34,7 @@ from sagemaker.serve.utils.types import ModelServer
 from sagemaker.serve.mode.function_pointers import Mode
 from sagemaker.serve.utils.telemetry_logger import _capture_telemetry
 from sagemaker.base_predictor import PredictorBase
+from sagemaker.huggingface.model import HuggingFacePredictor
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +89,14 @@ class TEI(ABC):
             logger.warning(messaging)
             self.model_server = ModelServer.TEI
 
+    def _save_schema_builder(self):
+        """Save schema builder for tei."""
+        if not os.path.exists(self.model_path):
+            os.makedirs(self.model_path)
+
+        code_path = Path(self.model_path).joinpath("code")
+        save_pkl(code_path, self.schema_builder)
+
     def _create_tei_model(self, **kwargs) -> Type[Model]:
         """Placeholder docstring"""
         if self.nb_instance_type and "instance_type" not in kwargs:
@@ -98,20 +110,37 @@ class TEI(ABC):
                 region=self.sagemaker_session.boto_region_name,
             )
 
-        pysdk_model = HuggingFaceModel(
+        self.pysdk_model = HuggingFaceModel(
             image_uri=self.image_uri,
             image_config=self.image_config,
             vpc_config=self.vpc_config,
             env=self.env_vars,
             role=self.role_arn,
             sagemaker_session=self.sagemaker_session,
+            predictor_cls=self._get_tei_predictor,
         )
 
         logger.info("Detected %s. Proceeding with the the deployment.", self.image_uri)
 
-        self._original_deploy = pysdk_model.deploy
-        pysdk_model.deploy = self._tei_model_builder_deploy_wrapper
-        return pysdk_model
+        self._original_deploy = self.pysdk_model.deploy
+        self.pysdk_model.deploy = self._tei_model_builder_deploy_wrapper
+        self._original_register = self.pysdk_model.register
+        self.pysdk_model.register = self._model_builder_register_wrapper
+        self.model_package = None
+        return self.pysdk_model
+
+    def _get_tei_predictor(
+            self, endpoint_name: str, sagemaker_session: Session
+    ) -> HuggingFacePredictor:
+        """Creates a HuggingFacePredictor object"""
+        serializer, deserializer = self._get_client_translators()
+
+        return HuggingFacePredictor(
+            endpoint_name=endpoint_name,
+            sagemaker_session=sagemaker_session,
+            serializer=serializer,
+            deserializer=deserializer,
+        )
 
     @_capture_telemetry("tei.deploy")
     def _tei_model_builder_deploy_wrapper(self, *args, **kwargs) -> Type[PredictorBase]:
@@ -226,6 +255,8 @@ class TEI(ABC):
         self.secret_key = None
 
         self._set_to_tei()
+
+        self._save_schema_builder()
 
         self.pysdk_model = self._build_for_hf_tei()
         if self.role_arn:

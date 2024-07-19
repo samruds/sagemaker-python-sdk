@@ -20,6 +20,8 @@ _DEFAULT_ENV_VARS = {
     "TRANSFORMERS_CACHE": "/opt/ml/model/",
     "HF_HOME": "/opt/ml/model/",
     "HUGGINGFACE_HUB_CACHE": "/opt/ml/model/",
+    "SAGEMAKER_SUBMIT_DIRECTORY": "/opt/ml/model/code",
+    "SAGEMAKER_CONTAINER_LOG_LEVEL": "10",
 }
 
 logger = logging.getLogger(__name__)
