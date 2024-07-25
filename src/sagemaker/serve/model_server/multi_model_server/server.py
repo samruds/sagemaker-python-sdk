@@ -2,9 +2,12 @@
 
 from __future__ import absolute_import
 
+import asyncio
+import subprocess
 import requests
 import logging
 import platform
+import time
 from pathlib import Path
 from sagemaker import Session, fw_utils
 from sagemaker.serve.utils.exceptions import LocalModelInvocationException
@@ -13,6 +16,9 @@ from sagemaker.s3_utils import determine_bucket_and_prefix, parse_s3_url, s3_pat
 from sagemaker.s3 import S3Uploader
 from sagemaker.local.utils import get_docker_host
 from sagemaker.serve.utils.optimize_utils import _is_s3_uri
+import urllib.request
+from sagemaker.app import main
+
 
 MODE_DIR_BINDING = "/opt/ml/model/"
 _DEFAULT_ENV_VARS = {}
@@ -151,6 +157,63 @@ class SageMakerMultiModelServer:
             }
 
         return model_data, _update_env_vars(env_vars)
+
+
+class InProcessMultiModelServer:
+    """In Process Mode Multi Model server instance"""
+
+    def _start_serving(self):
+        asyncio.create_task(main())
+
+        time.sleep(10)
+
+    def _invoke_multi_model_server_serving(self, request: object, content_type: str, accept: str):
+        """Placeholder docstring"""
+
+        logger.info("Now im here ")
+
+        try: # for Python 3
+            from http.client import HTTPConnection
+        except ImportError:
+            from httplib import HTTPConnection
+
+        HTTPConnection.debuglevel = 1
+        logging.basicConfig()  # you need to initialize logging, otherwise you will not see
+        # anything from requests
+        logging.getLogger().setLevel(logging.DEBUG)
+        requests_log = logging.getLogger("urllib3")
+        requests_log.setLevel(logging.DEBUG)
+        requests_log.propagate = True
+
+        try:
+            requests.get('http://127.0.0.1:8080/', verify=False).json()
+        except Exception as ex:
+            logger.error(ex)
+            raise ex
+
+        try:
+            response = requests.get(
+                f"http://127.0.0.1:8080/generate",
+                json=json.dumps(request),
+                headers={"Content-Type": content_type, "Accept": accept},
+                timeout=600,
+            ).json()
+
+            return response
+        except requests.exceptions.ConnectionError as e:
+            logger.debug(f"Error connecting to the server: {e}")
+        except requests.exceptions.HTTPError as e:
+            logger.debug(f"HTTP error occurred: {e}")
+        except requests.exceptions.RequestException as e:
+            logger.debug(f"An error occurred: {e}")
+        except Exception as e:
+            raise Exception("Unable to send request to the local container server") from e
+
+
+    def _multi_model_server_deep_ping(self, predictor: PredictorBase):
+        """Placeholder docstring"""
+        response = None
+        return True, response
 
 
 def _update_env_vars(env_vars: dict) -> dict:
