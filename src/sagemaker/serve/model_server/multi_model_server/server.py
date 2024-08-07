@@ -165,26 +165,24 @@ class InProcessMultiModelServer:
         background_tasks.add(task)
         task.add_done_callback(background_tasks.discard)
 
-        time.sleep(10)
-
     def _invoke_multi_model_server_serving(self, request: object, content_type: str,
     accept: str):
         """Placeholder docstring"""
-
+        time.sleep(2)
         background_tasks = set()
         task = asyncio.create_task(self.generate_connect())
         background_tasks.add(task)
         task.add_done_callback(background_tasks.discard)
+        return task.result()
 
 
     def _multi_model_server_deep_ping(self, predictor: PredictorBase):
         """Placeholder docstring"""
-
         background_tasks = set()
         task = asyncio.create_task(self.tcp_connect())
         background_tasks.add(task)
         task.add_done_callback(background_tasks.discard)
-        response = None
+        response = task.result()
         return True, response
 
     async def generate_connect(self):
@@ -202,6 +200,7 @@ class InProcessMultiModelServer:
         logger.info(data)
         writer.close()
         await writer.wait_closed()
+        return data
 
     async def tcp_connect(self):
         reader, writer = await asyncio.open_connection('127.0.0.1', 9007)
