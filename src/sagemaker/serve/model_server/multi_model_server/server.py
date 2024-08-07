@@ -213,6 +213,7 @@ class InProcessMultiModelServer:
         logger.info(data)
         writer.close()
         await writer.wait_closed()
+        return data
 
 def _update_env_vars(env_vars: dict) -> dict:
     """Placeholder docstring"""
